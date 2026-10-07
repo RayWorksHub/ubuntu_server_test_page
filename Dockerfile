@@ -24,7 +24,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --chmod=755 scripts/docker-entrypoint.sh /usr/local/bin/ganz-entrypoint
-RUN npm prune --omit=dev --no-audit --no-fund && chown -R node:node /app
+RUN npm prune --omit=dev --no-audit --no-fund \
+    && chown -R node:node /app/.next /app/public
 USER node
 EXPOSE 3000
 ENTRYPOINT ["ganz-entrypoint"]
