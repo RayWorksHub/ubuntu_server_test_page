@@ -60,3 +60,5 @@ curl -fsS https://ganzportalok.hu/api/health
 ```
 
 Az SMTP és DNS részletes leírása: `docs/EMAIL-DNS.md`.
+
+A VirtualBox NAT, Windows tűzfal és router porttovábbításának pontos sorrendje: `docs/HOST-NETWORK.md`.
