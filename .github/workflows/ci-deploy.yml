@@ -1,0 +1,60 @@
+name: Test and deploy GanzPortalok
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ganzportalok-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64, rayworks-server]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verify that no environment file is tracked
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+            echo "Tiltott környezeti fájl került a repositoryba." >&2
+            exit 1
+          fi
+
+      - name: Build and run source tests
+        run: docker build --target test -t ganzportalok-test:verification .
+
+      - name: Stage release while preserving server secrets and backups
+        shell: bash
+        run: |
+          set -euo pipefail
+          deploy_dir="$HOME/services/ganzportalok"
+          mkdir -p "$deploy_dir"
+          rsync -a --delete --exclude='.env' --exclude='backups/' --exclude='.git/' ./ "$deploy_dir/"
+          test -f "$deploy_dir/.env" || { echo "Hiányzik a szerveroldali .env fájl: $deploy_dir/.env" >&2; exit 1; }
+          cd "$deploy_dir"
+          docker compose config --quiet
+          docker compose build --pull app
+          docker compose up -d --remove-orphans
+
+      - name: Verify local health
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$HOME/services/ganzportalok"
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T app node -e "fetch('http://127.0.0.1:3000/api/health').then(async r=>{console.log(await r.text());process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"; then
+              docker compose ps
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose logs --tail=150
+          exit 1

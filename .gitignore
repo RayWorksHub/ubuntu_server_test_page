@@ -1,0 +1,9 @@
+node_modules/
+.next/
+coverage/
+.env
+.env.*
+!.env.example
+backups/*.sql.gz
+npm-debug.log*
+.DS_Store
