@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-./node_modules/.bin/prisma migrate deploy
-exec ./node_modules/.bin/next start -H 0.0.0.0 -p 3000
+node ./node_modules/prisma/build/index.js migrate deploy
+exec node server.js
