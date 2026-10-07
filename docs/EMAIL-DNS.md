@@ -16,7 +16,7 @@ Az alkalmazás hitelesített SMTP-kapcsolaton küld a `administration@ganzportal
 
   - Hosztnév: `_dmarc.ganzportalok.hu`
   - Típus: `TXT`
-  - Érték: `v=DMARC1; p=none; rua=mailto:administration@ganzportalok.hu; adkim=s; aspf=s`
+  - Érték: `v=DMARC1; p=none; rua=mailto:administration@ganzportalok.hu; adkim=r; aspf=r; pct=100`
 
 A kézbesítés igazolása után a DMARC-szabály fokozatosan `quarantine`, majd `reject` értékre szigorítható. Egyszerre több SPF rekord nem lehet.
 
