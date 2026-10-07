@@ -6,3 +6,11 @@ node_modules
 .env.*
 backups
 npm-debug.log*
+Dockerfile
+docker-compose.yml
+Caddyfile
+README.md
+docs
+scripts/backup.sh
+scripts/configure-smtp.sh
+scripts/restore.sh
