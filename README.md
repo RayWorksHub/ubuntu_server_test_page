@@ -30,6 +30,12 @@ docker compose up -d
 docker compose ps
 ```
 
+Az SMTP-jelszó biztonságosan, rejtett terminálbevitellel is beállítható:
+
+```bash
+./scripts/configure-smtp.sh
+```
+
 A PostgreSQL szolgáltatásnak nincs publikált hostportja; kizárólag a belső `database` Docker-hálózaton érhető el.
 
 ## Biztonsági mentés
