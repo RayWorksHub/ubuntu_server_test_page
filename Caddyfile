@@ -1,6 +1,6 @@
 {
-    email {$ACME_EMAIL}
     admin off
+    auto_https off
 }
 
 (app) {
@@ -26,14 +26,6 @@
         output stdout
         format console
     }
-}
-
-www.ganzportalok.hu {
-    redir https://ganzportalok.hu{uri} permanent
-}
-
-ganzportalok.hu {
-    import app
 }
 
 http://www.ganzportalok.hu:8080 {

@@ -25,7 +25,7 @@ Csak a DNS-rekordok ellenőrzése után szabad a Rackhostnál a domain névszerv
 - A szervernek csak működő kimenő internetkapcsolat és DNS-feloldás kell.
 - Másik Wi-Fi vagy mobilinternet használatakor a Tunnel automatikusan újracsatlakozik; a publikus DNS-t nem kell módosítani.
 - A `restart: unless-stopped` beállítás miatt a Tunnel a Dockerrel együtt automatikusan újraindul.
-- A Caddy 80/443 hostportjai a helyi tesztelés és későbbi közvetlen üzem lehetősége miatt megmaradnak, de a Tunnel működéséhez nem szükségesek.
+- A Caddy csak a belső Docker-hálózat `8080` portján figyel; közvetlen nyilvános hostportja nincs.
 
 ## Ellenőrzés
 

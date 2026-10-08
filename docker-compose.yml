@@ -50,12 +50,8 @@ services:
   caddy:
     image: caddy:2.10-alpine
     restart: unless-stopped
-    environment:
-      ACME_EMAIL: ${ACME_EMAIL}
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+    expose:
+      - "8080"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
