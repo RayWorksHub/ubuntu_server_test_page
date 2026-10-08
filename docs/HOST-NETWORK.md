@@ -1,40 +1,35 @@
-# Nyilvános hálózati elérés VirtualBox NAT mögül
+# Nyilvános elérés Cloudflare Tunnellel
 
-A virtuális gép jelenleg VirtualBox NAT hálózaton fut (`10.0.2.15`), ezért a Caddy 80/443 portjai önmagukban nem érhetők el az internetről. Az SSH-hoz használt `127.0.0.1:2222` ugyanennek a porttovábbításnak egy meglévő példája.
+A szerver változó hálózaton és VirtualBox NAT mögött is futhat. A `cloudflared` konténer kifelé épít titkosított kapcsolatot a Cloudflare hálózatához, ezért nincs szükség routeres porttovábbításra, nyilvános IPv4-címre vagy bejövő 80/443 portokra.
 
-## 1. VirtualBox porttovábbítás a Windows-gazdagépen
+## Felépítés
 
-Rendszergazdai PowerShellben listázza a futó VM pontos nevét:
+- A `cloudflared` ugyanazon a Docker `web` hálózaton éri el a Caddyt a `caddy:8080` címen.
+- A Caddy továbbítja a kéréseket az `app:3000` szolgáltatásnak.
+- A PostgreSQL csak a belső `database` hálózaton érhető el, nyilvános portja nincs.
+- A Cloudflare kezeli a nyilvános HTTPS-kapcsolatot.
 
-```powershell
-$VBoxManage = "$env:ProgramFiles\Oracle\VirtualBox\VBoxManage.exe"
-& $VBoxManage list runningvms
-```
+## DNS-átállítás
 
-Ezután a `VM_PONTOS_NEVE` helyére a listában látott nevet írva:
+Az átállítás előtt az összes működő Rackhost DNS-rekordot át kell másolni a Cloudflare-be, különösen az MX-, SPF-, DKIM- és egyéb levelezési rekordokat. A régi Railway webrekordok nem másolandók át.
 
-```powershell
-& $VBoxManage controlvm "VM_PONTOS_NEVE" natpf1 "ganz-http,tcp,,80,,80"
-& $VBoxManage controlvm "VM_PONTOS_NEVE" natpf1 "ganz-https,tcp,,443,,443"
-```
+A Cloudflare által kiosztott névszerverek:
 
-A szabályok ellenőrzése:
+- `cameron.ns.cloudflare.com`
+- `tani.ns.cloudflare.com`
 
-```powershell
-& $VBoxManage showvminfo "VM_PONTOS_NEVE" --machinereadable | Select-String Forwarding
-```
+Csak a DNS-rekordok ellenőrzése után szabad a Rackhostnál a domain névszervereit ezekre cserélni.
 
-## 2. Windows tűzfal és internetes router
+## Üzemeltetés
 
-- A Windows tűzfalon engedélyezni kell a bejövő TCP 80 és 443 portot a VirtualBox folyamat számára.
-- Ha a Windows-gép router mögött van, a routeren a TCP 80 és 443 portot a Windows-gép helyi IPv4-címére kell továbbítani.
-- CGNAT esetén közvetlen bejövő kapcsolat nem lehetséges; ilyenkor publikus IPv4-címet kell kérni a szolgáltatótól.
+- A szervernek csak működő kimenő internetkapcsolat és DNS-feloldás kell.
+- Másik Wi-Fi vagy mobilinternet használatakor a Tunnel automatikusan újracsatlakozik; a publikus DNS-t nem kell módosítani.
+- A `restart: unless-stopped` beállítás miatt a Tunnel a Dockerrel együtt automatikusan újraindul.
+- A Caddy 80/443 hostportjai a helyi tesztelés és későbbi közvetlen üzem lehetősége miatt megmaradnak, de a Tunnel működéséhez nem szükségesek.
 
-## 3. Átállítási sorrend
+## Ellenőrzés
 
-1. A porttovábbítások beállítása.
-2. Külső hálózatról a 80/443 port ellenőrzése.
-3. Csak ezután a `ganzportalok.hu` és `www.ganzportalok.hu` A rekordjainak átállítása a nyilvános IPv4-címre.
-4. A Caddy HTTPS-tanúsítvány kiadásának és a `/api/health` végpontnak az ellenőrzése.
-
-Az MX-, SPF- és DKIM-rekordokat a webes átállítás nem érinti.
+1. `docker compose ps` alatt az `app`, `db`, `caddy` és `cloudflared` szolgáltatás fusson.
+2. A Cloudflare Tunnel állapota legyen `healthy`.
+3. Névszerver-átállítás után a `https://ganzportalok.hu/api/health` adjon sikeres választ.
+4. Külső hálózatról is tesztelni kell a webes és e-mailes folyamatokat.

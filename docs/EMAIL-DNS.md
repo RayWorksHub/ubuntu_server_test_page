@@ -22,6 +22,6 @@ A kézbesítés igazolása után a DMARC-szabály fokozatosan `quarantine`, majd
 
 ## Webes DNS
 
-- `ganzportalok.hu` `A` rekordja a nyilvánosan elérhető szerver IPv4-címére mutasson.
-- `www.ganzportalok.hu` legyen ugyanarra az IPv4-címre mutató `A` rekord, vagy a gyökérdomainre mutató `CNAME`.
-- Az MX, SPF és DKIM rekordokat a webes átállítás nem érinti.
+- A `ganzportalok.hu` és `www.ganzportalok.hu` proxizott Cloudflare `CNAME` rekordja a Tunnel `*.cfargotunnel.com` céljára mutat.
+- Közvetlen szerver-IP-címet nem kell közzétenni.
+- Névszerverváltás előtt az MX-, SPF-, DKIM- és minden egyéb aktív levelezési rekordot változatlanul át kell másolni a Cloudflare DNS-be.

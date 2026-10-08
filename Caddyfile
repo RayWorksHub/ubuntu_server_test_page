@@ -3,11 +3,7 @@
     admin off
 }
 
-www.ganzportalok.hu {
-    redir https://ganzportalok.hu{uri} permanent
-}
-
-ganzportalok.hu {
+(app) {
     encode zstd gzip
 
     header {
@@ -30,4 +26,20 @@ ganzportalok.hu {
         output stdout
         format console
     }
+}
+
+www.ganzportalok.hu {
+    redir https://ganzportalok.hu{uri} permanent
+}
+
+ganzportalok.hu {
+    import app
+}
+
+http://www.ganzportalok.hu:8080 {
+    redir https://ganzportalok.hu{uri} permanent
+}
+
+http://ganzportalok.hu:8080 {
+    import app
 }

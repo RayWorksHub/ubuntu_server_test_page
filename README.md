@@ -1,6 +1,6 @@
 # GanzPortalok saját infrastruktúra tesztalkalmazás
 
-Docker-alapú Next.js + TypeScript alkalmazás saját PostgreSQL-adatbázissal, Prisma migrációkkal, Caddy HTTPS reverse proxyval és hitelesített SMTP-küldéssel.
+Docker-alapú Next.js + TypeScript alkalmazás saját PostgreSQL-adatbázissal, Prisma migrációkkal, Caddy reverse proxyval, Cloudflare Tunnellel és hitelesített SMTP-küldéssel.
 
 ## Funkciók
 
@@ -12,7 +12,8 @@ Docker-alapú Next.js + TypeScript alkalmazás saját PostgreSQL-adatbázissal, 
 - felhasználónként elkülönített Todo-listák és feladatok;
 - tartós PostgreSQL-volume;
 - automatikus Prisma migráció induláskor;
-- Caddy HTTPS és biztonsági fejlécek;
+- Cloudflare Tunnel-alapú nyilvános HTTPS, nyitott routerport nélkül;
+- Caddy reverse proxy és biztonsági fejlécek;
 - mentési és explicit megerősítést igénylő visszaállítási eljárás.
 
 ## Első telepítés
@@ -20,7 +21,7 @@ Docker-alapú Next.js + TypeScript alkalmazás saját PostgreSQL-adatbázissal, 
 1. Másolja `.env.example` fájlt `.env` néven a szerveren.
 2. Generáljon külön, erős adatbázis-jelszót és alkalmazástitkot.
 3. Adja meg a hitelesített SMTP-adatokat.
-4. Ellenőrizze, hogy a domain a szerver nyilvános IP-címére mutat, és a 80/443 port elérhető.
+4. Hozza létre a Cloudflare Tunnelt, és mentse a kapott tokent `CLOUDFLARE_TUNNEL_TOKEN` néven a szerveroldali `.env` fájlba.
 5. Indítás:
 
 ```bash
@@ -61,4 +62,4 @@ curl -fsS https://ganzportalok.hu/api/health
 
 Az SMTP és DNS részletes leírása: `docs/EMAIL-DNS.md`.
 
-A VirtualBox NAT, Windows tűzfal és router porttovábbításának pontos sorrendje: `docs/HOST-NETWORK.md`.
+A Cloudflare Tunnel és a névszerver-átállítás pontos sorrendje: `docs/HOST-NETWORK.md`.

@@ -68,6 +68,21 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --loglevel info run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    depends_on:
+      caddy:
+        condition: service_started
+    networks:
+      - web
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   postgres_data:
   caddy_data:
