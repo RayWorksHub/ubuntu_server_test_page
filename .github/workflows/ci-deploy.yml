@@ -34,4 +34,6 @@ jobs:
           POSTGRES_PASSWORD: ci-placeholder
           CLOUDFLARE_TUNNEL_TOKEN: ci-placeholder
           ACME_EMAIL: administration@ganzportalok.hu
-        run: docker compose config --quiet
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
