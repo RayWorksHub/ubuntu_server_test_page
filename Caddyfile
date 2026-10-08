@@ -17,6 +17,8 @@
     }
 
     reverse_proxy app:3000 {
+        # Public requests reach this internal listener through the HTTPS Tunnel.
+        header_up X-Forwarded-Proto https
         health_uri /api/health
         health_interval 15s
         health_timeout 5s
