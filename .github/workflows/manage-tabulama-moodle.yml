@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: tabulama-moodle-server
-  cancel-in-progress: false
+  group: tabulama-moodle-server-any-runner
+  cancel-in-progress: true
 
 jobs:
   install-and-verify:
