@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   install-and-verify:
-    runs-on: [self-hosted, Linux, X64, rayworks-server]
+    runs-on: self-hosted
     timeout-minutes: 240
 
     steps:
