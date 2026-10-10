@@ -1,0 +1,102 @@
+name: Manage TabuLama Moodle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/manage-tabulama-moodle.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tabulama-moodle-server
+  cancel-in-progress: false
+
+jobs:
+  install-and-verify:
+    runs-on: [self-hosted, Linux, X64, rayworks-server]
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out the TabuLama installer
+        uses: actions/checkout@v5
+        with:
+          repository: RayWorksHub/tabulama
+          ref: main
+          path: tabulama
+
+      - name: Inspect current server state
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo "Runner user: $(id -un)"
+          echo "Host: $(hostname)"
+          docker --version
+          docker compose version
+
+          if [[ -d /opt/tabulama-education ]]; then
+            echo "Existing Moodle installation directory found."
+            if [[ -f /opt/tabulama-education/compose.yaml ]]; then
+              (
+                cd /opt/tabulama-education
+                docker compose ps || true
+              )
+            fi
+          else
+            echo "Moodle installation directory does not exist yet."
+          fi
+
+      - name: Resume Moodle installation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          install_dir=/opt/tabulama-education
+
+          if [[ ! -d "$install_dir" ]]; then
+            sudo -n install -d -m 0750 "$install_dir"
+            sudo -n chown "$(id -u):$(id -g)" "$install_dir"
+          fi
+
+          if [[ ! -w "$install_dir" ]]; then
+            echo "The runner user cannot write to $install_dir." >&2
+            exit 1
+          fi
+
+          sed             -e '/^sudo install -d -m 0750 "\$INSTALL_DIR"$/d'             -e '/^sudo chown "$(id -u):$(id -g)" "\$INSTALL_DIR"$/d'             -e '/^echo "Admin jelszó:/d'             tabulama/infra/moodle/install-moodle.sh             > "$RUNNER_TEMP/install-moodle-safe.sh"
+          chmod 0700 "$RUNNER_TEMP/install-moodle-safe.sh"
+
+          flock --exclusive --nonblock /tmp/tabulama-moodle-install.lock             bash "$RUNNER_TEMP/install-moodle-safe.sh"
+
+      - name: Verify Moodle locally
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd /opt/tabulama-education
+          docker compose ps
+
+          for attempt in $(seq 1 30); do
+            status="$(curl --silent --show-error --output /dev/null               --write-out '%{http_code}'               http://127.0.0.1:8082/login/index.php || true)"
+            if [[ "$status" =~ ^(200|301|302|303)$ ]]; then
+              echo "Moodle local HTTP check succeeded with status $status."
+              exit 0
+            fi
+            echo "Waiting for Moodle (attempt $attempt/30, status: ${status:-none})..."
+            sleep 10
+          done
+
+          echo "Moodle did not become healthy in time." >&2
+          docker compose logs --tail=150 moodle moodle-db moodle-cron || true
+          exit 1
+
+      - name: Show safe diagnostics after failure
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          if [[ -f /opt/tabulama-education/compose.yaml ]]; then
+            cd /opt/tabulama-education
+            docker compose ps
+            docker compose logs --tail=150 moodle moodle-db moodle-cron
+          fi
